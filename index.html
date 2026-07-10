@@ -3,52 +3,42 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#111827">
   <title>Promociones AMPM</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="toast" class="toast"></div>
 
   <section id="loginView" class="login-shell">
     <div class="login-card">
-      <div class="brand">AMPM</div>
+      <div class="brand-pill">AMPM</div>
       <h1>Promociones AMPM</h1>
-      <p>Panel profesional para administrar promociones desde celular o computadora.</p>
-
+      <p>Control de promociones, tiendas, agentes y resultados.</p>
       <form id="loginForm">
-        <label>Usuario
-          <input id="loginUser" autocomplete="username" required>
-        </label>
-        <label>Contraseña
-          <input id="loginPass" type="password" autocomplete="current-password" required>
-        </label>
-        <button class="btn primary block" type="submit">Ingresar</button>
+        <label>Usuario<input id="loginUser" required autocomplete="username"></label>
+        <label>Contraseña<input id="loginPass" required type="password" autocomplete="current-password"></label>
+        <button class="btn primary block">Ingresar</button>
       </form>
-
-      <div class="access-box">
-        <strong>Acceso inicial</strong>
-        <span>Usuario: <code>admin</code></span>
-        <span>Contraseña: <code>ampm123</code></span>
-      </div>
+      <div class="access"><b>Acceso inicial</b><span>Usuario: admin</span><span>Contraseña: ampm123</span></div>
     </div>
   </section>
 
   <div id="appView" class="app hidden">
     <aside id="sidebar" class="sidebar">
-      <div class="sidebar-brand">
-        <div class="brand mini">AMPM</div>
-        <div><strong>Promociones</strong><small>Panel administrativo</small></div>
+      <div class="side-brand">
+        <div class="brand-pill small">AMPM</div>
+        <div><b>Promociones</b><small>Panel administrativo</small></div>
       </div>
 
       <nav>
-        <button class="nav-btn active" data-view="dashboard">📊 Resumen</button>
-        <button class="nav-btn" data-view="promotions">🏷️ Promociones</button>
-        <button class="nav-btn" data-view="reports">📈 Reportes</button>
-        <button class="nav-btn" data-view="settings">⚙️ Configuración</button>
+        <button class="nav-btn active" data-view="dashboard">▦ Resumen</button>
+        <button class="nav-btn" data-view="promotions">◆ Promociones</button>
+        <button class="nav-btn" data-view="agents">♟ Agentes</button>
+        <button class="nav-btn" data-view="analytics">◉ Analítica</button>
+        <button class="nav-btn" data-view="settings">⚙ Configuración</button>
       </nav>
-
       <button id="logoutBtn" class="btn ghost logout">Cerrar sesión</button>
     </aside>
 
@@ -58,114 +48,116 @@
           <h2 id="pageTitle">Resumen</h2>
           <p id="dateLabel"></p>
         </div>
-        <button id="menuBtn" class="menu-btn">☰</button>
+        <div class="top-actions">
+          <select id="globalStore">
+            <option value="A72">A72</option>
+          </select>
+          <button id="menuBtn" class="menu-btn">☰</button>
+        </div>
       </header>
 
       <section id="dashboardView" class="view">
         <div class="stats">
-          <article><span>Total</span><strong id="statTotal">0</strong></article>
-          <article><span>Activas</span><strong id="statActive">0</strong></article>
-          <article><span>Por vencer</span><strong id="statEnding">0</strong></article>
-          <article><span>Vencidas</span><strong id="statExpired">0</strong></article>
+          <article><span>Promociones</span><strong id="statTotal">0</strong><small>Total registradas</small></article>
+          <article><span>Activas</span><strong id="statActive">0</strong><small>Disponibles hoy</small></article>
+          <article><span>Por vencer</span><strong id="statEnding">0</strong><small>Próximos 5 días</small></article>
+          <article><span>Agentes</span><strong id="statAgents">8</strong><small>Equipo registrado</small></article>
         </div>
 
-        <div class="panel">
-          <div class="panel-head">
-            <div>
-              <h3>Promociones activas</h3>
-              <p>Promociones actualmente disponibles.</p>
+        <div class="dashboard-grid">
+          <article class="panel">
+            <div class="panel-head"><div><h3>Estado de promociones</h3><p>Distribución actual.</p></div></div>
+            <div class="donut-wrap">
+              <div id="statusDonut" class="donut"><div class="donut-center"><b id="donutTotal">0</b><span>Total</span></div></div>
+              <div id="donutLegend" class="legend"></div>
             </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head"><div><h3>Promociones de la tienda</h3><p>Tienda A72.</p></div></div>
+            <div id="storeBars" class="bar-chart"></div>
+          </article>
+        </div>
+
+        <article class="panel">
+          <div class="panel-head">
+            <div><h3>Promociones destacadas</h3><p>Las promociones activas más recientes.</p></div>
             <button id="quickAddBtn" class="btn primary">+ Nueva promoción</button>
           </div>
           <div id="featuredGrid" class="promo-grid"></div>
-        </div>
+        </article>
       </section>
 
       <section id="promotionsView" class="view hidden">
-        <div class="panel">
+        <article class="panel">
           <div class="panel-head">
-            <div>
-              <h3>Gestión de promociones</h3>
-              <p>Crea, edita, filtra y elimina promociones.</p>
-            </div>
+            <div><h3>Gestión de promociones</h3><p>Crea, edita, elimina y filtra.</p></div>
             <button id="addPromoBtn" class="btn primary">+ Nueva promoción</button>
           </div>
-
           <div class="filters">
-            <input id="searchInput" type="search" placeholder="Buscar por nombre, producto, código o tienda">
+            <input id="searchInput" type="search" placeholder="Buscar producto, código o promoción">
             <select id="statusFilter">
               <option value="all">Todos los estados</option>
               <option value="active">Activas</option>
               <option value="upcoming">Próximas</option>
               <option value="expired">Vencidas</option>
             </select>
-            <select id="storeFilter">
-              <option value="all">Todas las tiendas</option>
+            <select id="promoStoreFilter">
+              <option value="A72">A72</option>
             </select>
           </div>
-
           <div id="promoGrid" class="promo-grid"></div>
-        </div>
+        </article>
       </section>
 
-      <section id="reportsView" class="view hidden">
-        <div class="panel">
+      <section id="agentsView" class="view hidden">
+        <article class="panel">
           <div class="panel-head">
-            <div>
-              <h3>Reportes</h3>
-              <p>Resumen por estado y tienda.</p>
-            </div>
-            <button id="printReportBtn" class="btn secondary">Imprimir reporte</button>
+            <div><h3>Equipo de agentes</h3><p>Desempeño por tienda.</p></div>
           </div>
-          <div class="report-grid">
-            <div>
-              <h4>Por estado</h4>
-              <div id="statusReport"></div>
+          <div id="agentGrid" class="agent-grid"></div>
+        </article>
+      </section>
+
+      <section id="analyticsView" class="view hidden">
+        <div class="dashboard-grid">
+          <article class="panel">
+            <div class="panel-head"><div><h3>Promociones de A72</h3><p>Total de promociones registradas en la tienda.</p></div></div>
+            <div class="donut-wrap">
+              <div id="storeDonut" class="donut store-donut"><div class="donut-center"><b id="storeDonutTotal">0</b><span>Total</span></div></div>
+              <div id="storeLegend" class="legend"></div>
             </div>
-            <div>
-              <h4>Por tienda</h4>
-              <div id="storeReport"></div>
-            </div>
-          </div>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><div><h3>Promociones por agente</h3><p>Comparativo del equipo.</p></div></div>
+            <div id="agentBars" class="bar-chart agent-bars"></div>
+          </article>
         </div>
+
+        <article class="panel">
+          <div class="panel-head"><div><h3>Mapa de calor semanal</h3><p>Mayor intensidad = más actividad promocional.</p></div></div>
+          <div id="heatmap" class="heatmap"></div>
+          <div class="heat-legend"><span>Menor</span><i class="h0"></i><i class="h1"></i><i class="h2"></i><i class="h3"></i><i class="h4"></i><span>Mayor</span></div>
+        </article>
       </section>
 
       <section id="settingsView" class="view hidden">
-        <div class="panel settings">
-          <div>
-            <h3>Credenciales</h3>
-            <p>Cambia el usuario y la contraseña de acceso.</p>
-          </div>
-
+        <article class="panel settings">
+          <div><h3>Credenciales</h3><p>Cambia el usuario y la contraseña.</p></div>
           <form id="credentialsForm" class="settings-form">
-            <label>Nuevo usuario
-              <input id="newUsername" required>
-            </label>
-            <label>Nueva contraseña
-              <input id="newPassword" type="password" minlength="6" required>
-            </label>
-            <button class="btn primary" type="submit">Guardar credenciales</button>
+            <label>Nuevo usuario<input id="newUsername" required></label>
+            <label>Nueva contraseña<input id="newPassword" type="password" minlength="6" required></label>
+            <button class="btn primary">Guardar</button>
           </form>
-
           <hr>
-
-          <div>
-            <h3>Datos</h3>
-            <p>Haz respaldo o restaura la información.</p>
-          </div>
+          <div><h3>Respaldo</h3><p>Exporta o restaura la información.</p></div>
           <div class="data-actions">
             <button id="exportBtn" class="btn secondary">Exportar respaldo</button>
-            <label class="btn secondary file-label">Importar respaldo
-              <input id="importFile" type="file" accept=".json" hidden>
-            </label>
+            <label class="btn secondary file-label">Importar respaldo<input id="importFile" type="file" accept=".json" hidden></label>
             <button id="resetBtn" class="btn danger">Restablecer datos</button>
           </div>
-
-          <div class="notice">
-            <strong>Importante:</strong> esta versión guarda los datos en el navegador del dispositivo.
-            Para compartir datos entre varios teléfonos se debe conectar después una base de datos en línea.
-          </div>
-        </div>
+          <div class="notice"><b>Datos:</b> esta versión guarda la información en el navegador del dispositivo.</div>
+        </article>
       </section>
     </main>
   </div>
@@ -173,51 +165,26 @@
   <dialog id="promoDialog">
     <form id="promoForm">
       <div class="dialog-head">
-        <div>
-          <h3 id="dialogTitle">Nueva promoción</h3>
-          <p>Completa la información.</p>
-        </div>
+        <div><h3 id="dialogTitle">Nueva promoción</h3><p>Completa la información.</p></div>
         <button id="closeDialogBtn" type="button" class="icon-btn">✕</button>
       </div>
-
       <input id="promoId" type="hidden">
-
       <div class="form-grid">
-        <label class="full">Nombre
-          <input id="promoName" required placeholder="Ej. Combo desayuno">
-        </label>
-        <label>Código
-          <input id="promoCode" placeholder="Ej. PROMO-001">
-        </label>
-        <label>Producto
-          <input id="promoProduct" required placeholder="Ej. Café + sándwich">
-        </label>
-        <label>Precio promocional
-          <input id="promoPrice" type="number" min="0" step="0.01" required>
-        </label>
-        <label>Precio anterior
-          <input id="promoOldPrice" type="number" min="0" step="0.01">
-        </label>
-        <label>Tienda
-          <input id="promoStore" required placeholder="Ej. A42 Ocotal">
-        </label>
-        <label>Fecha de inicio
-          <input id="promoStart" type="date" required>
-        </label>
-        <label>Fecha final
-          <input id="promoEnd" type="date" required>
-        </label>
-        <label class="full">Imagen (URL opcional)
-          <input id="promoImage" type="url" placeholder="https://...">
-        </label>
-        <label class="full">Descripción
-          <textarea id="promoDescription" rows="3"></textarea>
-        </label>
+        <label class="full">Nombre<input id="promoName" required></label>
+        <label>Código<input id="promoCode"></label>
+        <label>Producto<input id="promoProduct" required></label>
+        <label>Precio promocional<input id="promoPrice" type="number" min="0" step="0.01" required></label>
+        <label>Precio anterior<input id="promoOldPrice" type="number" min="0" step="0.01"></label>
+        <label>Tienda<select id="promoStore" required><option>A72</option></select></label>
+        <label>Agente<select id="promoAgent" required></select></label>
+        <label>Fecha de inicio<input id="promoStart" type="date" required></label>
+        <label>Fecha final<input id="promoEnd" type="date" required></label>
+        <label class="full">Imagen (URL opcional)<input id="promoImage" type="url"></label>
+        <label class="full">Descripción<textarea id="promoDescription" rows="3"></textarea></label>
       </div>
-
       <div class="dialog-actions">
         <button id="cancelDialogBtn" type="button" class="btn secondary">Cancelar</button>
-        <button type="submit" class="btn primary">Guardar promoción</button>
+        <button class="btn primary">Guardar promoción</button>
       </div>
     </form>
   </dialog>
