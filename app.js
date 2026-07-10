@@ -1,226 +1,50 @@
-const KEYS={promos:"ampm_promos_pro",user:"ampm_user_pro",session:"ampm_session_pro"};
-const $=id=>document.getElementById(id);
-const iso=d=>d.toISOString().slice(0,10);
-const addDays=n=>{const d=new Date();d.setDate(d.getDate()+n);return iso(d)};
-const defaultUser={username:"admin",password:"ampm123"};
-const samplePromos=[
-  {id:crypto.randomUUID(),name:"Combo desayuno",code:"PROMO-001",product:"Café + sándwich",price:89,oldPrice:110,store:"Todas las tiendas",start:addDays(-2),end:addDays(12),image:"",description:"Ideal para comenzar el día."},
-  {id:crypto.randomUUID(),name:"2x1 en bebidas",code:"PROMO-002",product:"Bebidas seleccionadas",price:45,oldPrice:90,store:"A42 Ocotal",start:addDays(1),end:addDays(10),image:"",description:"Aplican productos seleccionados."}
-];
-
-let promotions=loadPromotions();
-
-function loadPromotions(){
-  const raw=localStorage.getItem(KEYS.promos);
-  if(!raw){localStorage.setItem(KEYS.promos,JSON.stringify(samplePromos));return [...samplePromos]}
-  try{return JSON.parse(raw)}catch{return []}
-}
-function savePromotions(){localStorage.setItem(KEYS.promos,JSON.stringify(promotions))}
-function getUser(){
-  const raw=localStorage.getItem(KEYS.user);
-  if(!raw){localStorage.setItem(KEYS.user,JSON.stringify(defaultUser));return {...defaultUser}}
-  try{return JSON.parse(raw)}catch{return {...defaultUser}}
-}
-function toast(message){
-  const el=$("toast");el.textContent=message;el.classList.add("show");
-  clearTimeout(window.__toast);window.__toast=setTimeout(()=>el.classList.remove("show"),2300)
-}
-function statusOf(p){
-  const today=iso(new Date());
-  if(p.start>today)return"upcoming";
-  if(p.end<today)return"expired";
-  return"active"
-}
-function statusLabel(s){return{active:"Activa",upcoming:"Próxima",expired:"Vencida"}[s]}
+const KEYS={promos:"ampm_v2_promos",user:"ampm_v2_user",session:"ampm_v2_session"};
+const agents=[
+{name:"Douglas Zeledón",store:"A72"},{name:"Cristhel Duarte",store:"A72"},
+{name:"Milagros Marín",store:"A72"},{name:"Nuryt Flores",store:"A72"},
+{name:"Noel Ponce",store:"A56 Este"},{name:"Sammy Sanches",store:"A56 Este"},
+{name:"Joheyner Duarte",store:"A56 Este"},{name:"Carla Vanessa",store:"A56 Este"}];
+const $=id=>document.getElementById(id);const iso=d=>d.toISOString().slice(0,10);
+const addDays=n=>{let d=new Date();d.setDate(d.getDate()+n);return iso(d)};
+const sample=[
+{id:crypto.randomUUID(),name:"Combo desayuno",code:"P-001",product:"Café + sándwich",price:89,oldPrice:110,store:"A72",agent:"Douglas Zeledón",start:addDays(-3),end:addDays(10),image:"",description:"Promoción de desayuno."},
+{id:crypto.randomUUID(),name:"2x1 bebidas",code:"P-002",product:"Bebidas seleccionadas",price:45,oldPrice:90,store:"A56 Este",agent:"Sammy Sanches",start:addDays(-1),end:addDays(5),image:"",description:"Aplican productos seleccionados."},
+{id:crypto.randomUUID(),name:"Snack de la tarde",code:"P-003",product:"Gaseosa + snack",price:69,oldPrice:85,store:"A72",agent:"Nuryt Flores",start:addDays(2),end:addDays(14),image:"",description:"Disponible próximamente."}];
+let promotions=load();
+function load(){try{let x=localStorage.getItem(KEYS.promos);if(x)return JSON.parse(x)}catch{}localStorage.setItem(KEYS.promos,JSON.stringify(sample));return [...sample]}
+function save(){localStorage.setItem(KEYS.promos,JSON.stringify(promotions))}
+function getUser(){try{return JSON.parse(localStorage.getItem(KEYS.user))||{username:"admin",password:"ampm123"}}catch{return{username:"admin",password:"ampm123"}}}
+function toast(t){let e=$("toast");e.textContent=t;e.classList.add("show");clearTimeout(window.tt);window.tt=setTimeout(()=>e.classList.remove("show"),2200)}
+function statusOf(p){let t=iso(new Date());return p.start>t?"upcoming":p.end<t?"expired":"active"}function label(s){return{active:"Activa",upcoming:"Próxima",expired:"Vencida"}[s]}
 function money(v){return new Intl.NumberFormat("es-NI",{style:"currency",currency:"NIO"}).format(Number(v||0))}
 function esc(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
-
-function promoCard(p){
-  const s=statusOf(p);
-  const image=p.image?`<img src="${esc(p.image)}" alt="${esc(p.name)}" onerror="this.parentElement.innerHTML='🏷️'">`:"🏷️";
-  return `<article class="promo-card">
-    <div class="promo-image">${image}</div>
-    <div class="promo-body">
-      <span class="badge ${s}">${statusLabel(s)}</span>
-      <h4>${esc(p.name)}</h4>
-      <div class="price">${money(p.price)}</div>
-      ${p.oldPrice?`<div class="old-price">${money(p.oldPrice)}</div>`:""}
-      <div class="meta">
-        ${p.code?`<span>🔖 ${esc(p.code)}</span>`:""}
-        <span>🛒 ${esc(p.product)}</span>
-        <span>🏪 ${esc(p.store)}</span>
-        <span>📅 ${p.start} al ${p.end}</span>
-        ${p.description?`<span>${esc(p.description)}</span>`:""}
-      </div>
-      <div class="card-actions">
-        <button class="btn secondary" onclick="editPromotion('${p.id}')">Editar</button>
-        <button class="btn danger" onclick="deletePromotion('${p.id}')">Eliminar</button>
-      </div>
-    </div>
-  </article>`
-}
-
+function visiblePromos(){let gs=$("globalStore").value;return promotions.filter(p=>gs==="all"||p.store===gs)}
+function card(p){let s=statusOf(p);return `<article class="promo-card"><div class="promo-image">${p.image?`<img src="${esc(p.image)}" onerror="this.parentElement.innerHTML='🏷️'">`:"🏷️"}</div><div class="promo-body"><span class="badge ${s}">${label(s)}</span><h4>${esc(p.name)}</h4><div class="price">${money(p.price)}</div>${p.oldPrice?`<div class="old-price">${money(p.oldPrice)}</div>`:""}<div class="meta"><span>🔖 ${esc(p.code||"Sin código")}</span><span>🛒 ${esc(p.product)}</span><span>🏪 ${esc(p.store)}</span><span>👤 ${esc(p.agent)}</span><span>📅 ${p.start} al ${p.end}</span></div><div class="card-actions"><button class="btn secondary" onclick="editPromotion('${p.id}')">Editar</button><button class="btn danger" onclick="deletePromotion('${p.id}')">Eliminar</button></div></div></article>`}
 function render(){
-  const query=($("searchInput")?.value||"").trim().toLowerCase();
-  const statusFilter=$("statusFilter")?.value||"all";
-  const storeFilter=$("storeFilter")?.value||"all";
-
-  const stores=[...new Set(promotions.map(p=>p.store).filter(Boolean))].sort();
-  const currentStore=$("storeFilter").value;
-  $("storeFilter").innerHTML='<option value="all">Todas las tiendas</option>'+stores.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join("");
-  $("storeFilter").value=stores.includes(currentStore)?currentStore:"all";
-
-  const filtered=promotions.filter(p=>{
-    const text=[p.name,p.code,p.product,p.store,p.description].join(" ").toLowerCase();
-    return text.includes(query)&&(statusFilter==="all"||statusOf(p)===statusFilter)&&(storeFilter==="all"||p.store===storeFilter)
-  });
-
-  $("promoGrid").innerHTML=filtered.length?filtered.map(promoCard).join(""):'<div class="empty">No hay promociones para mostrar.</div>';
-  const active=promotions.filter(p=>statusOf(p)==="active");
-  $("featuredGrid").innerHTML=active.length?active.slice(0,3).map(promoCard).join(""):'<div class="empty">No hay promociones activas.</div>';
-
-  $("statTotal").textContent=promotions.length;
-  $("statActive").textContent=active.length;
-  $("statExpired").textContent=promotions.filter(p=>statusOf(p)==="expired").length;
-  $("statEnding").textContent=active.filter(p=>{
-    const diff=(new Date(p.end)-new Date())/86400000;
-    return diff>=0&&diff<=5
-  }).length;
-
-  renderReports()
+ let base=visiblePromos(),q=($("searchInput").value||"").toLowerCase(),sf=$("statusFilter").value,st=$("promoStoreFilter").value;
+ let filtered=base.filter(p=>[p.name,p.code,p.product,p.store,p.agent].join(" ").toLowerCase().includes(q)&&(sf==="all"||statusOf(p)===sf)&&(st==="all"||p.store===st));
+ $("promoGrid").innerHTML=filtered.length?filtered.map(card).join(""):'<div class="empty">No hay promociones para mostrar.</div>';
+ let active=base.filter(p=>statusOf(p)==="active"),up=base.filter(p=>statusOf(p)==="upcoming"),ex=base.filter(p=>statusOf(p)==="expired");
+ $("featuredGrid").innerHTML=active.length?active.slice(0,3).map(card).join(""):'<div class="empty">No hay promociones activas.</div>';
+ $("statTotal").textContent=base.length;$("statActive").textContent=active.length;$("statEnding").textContent=active.filter(p=>(new Date(p.end)-new Date())/86400000<=5).length;$("statAgents").textContent=agents.filter(a=>$("globalStore").value==="all"||a.store===$("globalStore").value).length;
+ renderDonut(active.length,up.length,ex.length);renderStoreBars();renderAgents();renderAnalytics()
 }
-function renderReports(){
-  const byStatus={Activas:0,Próximas:0,Vencidas:0};
-  promotions.forEach(p=>{const s=statusOf(p);if(s==="active")byStatus.Activas++;else if(s==="upcoming")byStatus.Próximas++;else byStatus.Vencidas++});
-  $("statusReport").innerHTML='<div class="report-list">'+Object.entries(byStatus).map(([k,v])=>`<div class="report-row"><span>${k}</span><strong>${v}</strong></div>`).join("")+"</div>";
-
-  const stores={};
-  promotions.forEach(p=>stores[p.store]=(stores[p.store]||0)+1);
-  $("storeReport").innerHTML='<div class="report-list">'+(Object.entries(stores).length?Object.entries(stores).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="report-row"><span>${esc(k)}</span><strong>${v}</strong></div>`).join(""):'<div class="empty">Sin datos</div>')+"</div>"
-}
-function showApp(){
-  $("loginView").classList.add("hidden");
-  $("appView").classList.remove("hidden");
-  $("dateLabel").textContent=new Intl.DateTimeFormat("es-NI",{dateStyle:"full"}).format(new Date());
-  render()
-}
-function openDialog(p=null){
-  $("promoForm").reset();
-  $("promoId").value=p?.id||"";
-  $("dialogTitle").textContent=p?"Editar promoción":"Nueva promoción";
-  $("promoName").value=p?.name||"";
-  $("promoCode").value=p?.code||"";
-  $("promoProduct").value=p?.product||"";
-  $("promoPrice").value=p?.price||"";
-  $("promoOldPrice").value=p?.oldPrice||"";
-  $("promoStore").value=p?.store||"";
-  $("promoStart").value=p?.start||iso(new Date());
-  $("promoEnd").value=p?.end||addDays(7);
-  $("promoImage").value=p?.image||"";
-  $("promoDescription").value=p?.description||"";
-  $("promoDialog").showModal()
-}
-
-window.editPromotion=id=>openDialog(promotions.find(p=>p.id===id));
-window.deletePromotion=id=>{
-  if(confirm("¿Eliminar esta promoción?")){
-    promotions=promotions.filter(p=>p.id!==id);
-    savePromotions();render();toast("Promoción eliminada")
-  }
-};
-
-$("loginForm").addEventListener("submit",e=>{
-  e.preventDefault();
-  const user=getUser();
-  if($("loginUser").value===user.username&&$("loginPass").value===user.password){
-    sessionStorage.setItem(KEYS.session,"1");showApp()
-  }else toast("Usuario o contraseña incorrectos")
-});
-$("logoutBtn").addEventListener("click",()=>{
-  sessionStorage.removeItem(KEYS.session);
-  location.reload()
-});
-document.querySelectorAll(".nav-btn").forEach(btn=>btn.addEventListener("click",()=>{
-  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");
-  const view=btn.dataset.view;
-  document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));
-  $(view+"View").classList.remove("hidden");
-  $("pageTitle").textContent={dashboard:"Resumen",promotions:"Promociones",reports:"Reportes",settings:"Configuración"}[view];
-  $("sidebar").classList.remove("open")
-}));
-$("menuBtn").addEventListener("click",()=>$("sidebar").classList.toggle("open"));
-$("quickAddBtn").addEventListener("click",()=>openDialog());
-$("addPromoBtn").addEventListener("click",()=>openDialog());
-$("closeDialogBtn").addEventListener("click",()=>$("promoDialog").close());
-$("cancelDialogBtn").addEventListener("click",()=>$("promoDialog").close());
-$("searchInput").addEventListener("input",render);
-$("statusFilter").addEventListener("change",render);
-$("storeFilter").addEventListener("change",render);
-
-$("promoForm").addEventListener("submit",e=>{
-  e.preventDefault();
-  const data={
-    id:$("promoId").value||crypto.randomUUID(),
-    name:$("promoName").value.trim(),
-    code:$("promoCode").value.trim(),
-    product:$("promoProduct").value.trim(),
-    price:Number($("promoPrice").value),
-    oldPrice:Number($("promoOldPrice").value||0),
-    store:$("promoStore").value.trim(),
-    start:$("promoStart").value,
-    end:$("promoEnd").value,
-    image:$("promoImage").value.trim(),
-    description:$("promoDescription").value.trim()
-  };
-  if(data.end<data.start){toast("La fecha final no puede ser anterior a la inicial");return}
-  const index=promotions.findIndex(p=>p.id===data.id);
-  if(index>=0)promotions[index]=data;else promotions.unshift(data);
-  savePromotions();$("promoDialog").close();render();toast(index>=0?"Promoción actualizada":"Promoción creada")
-});
-
-$("credentialsForm").addEventListener("submit",e=>{
-  e.preventDefault();
-  localStorage.setItem(KEYS.user,JSON.stringify({username:$("newUsername").value.trim(),password:$("newPassword").value}));
-  toast("Credenciales actualizadas");
-  e.target.reset()
-});
-
-$("exportBtn").addEventListener("click",()=>{
-  const payload={promotions,user:getUser(),exportedAt:new Date().toISOString()};
-  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="respaldo-promociones-ampm.json";
-  a.click();
-  URL.revokeObjectURL(a.href)
-});
-
-$("importFile").addEventListener("change",async e=>{
-  const file=e.target.files[0];
-  if(!file)return;
-  try{
-    const data=JSON.parse(await file.text());
-    if(!Array.isArray(data.promotions))throw new Error();
-    promotions=data.promotions;
-    savePromotions();
-    if(data.user)localStorage.setItem(KEYS.user,JSON.stringify(data.user));
-    render();toast("Respaldo importado")
-  }catch{toast("Archivo de respaldo inválido")}
-  e.target.value=""
-});
-
-$("resetBtn").addEventListener("click",()=>{
-  if(confirm("¿Restablecer todos los datos?")){
-    localStorage.removeItem(KEYS.promos);
-    localStorage.removeItem(KEYS.user);
-    location.reload()
-  }
-});
-
-$("printReportBtn").addEventListener("click",()=>window.print());
-
-if("serviceWorker" in navigator){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js").catch(()=>{}))
-}
-if(sessionStorage.getItem(KEYS.session)==="1")showApp();
+function renderDonut(a,u,e){let total=a+u+e||1,pa=a/total*100,pu=u/total*100;$("statusDonut").style.background=`conic-gradient(#22c55e 0 ${pa}%,#f59e0b ${pa}% ${pa+pu}%,#ef4444 ${pa+pu}% 100%)`;$("donutTotal").textContent=a+u+e;$("donutLegend").innerHTML=legend([["Activas",a,"#22c55e"],["Próximas",u,"#f59e0b"],["Vencidas",e,"#ef4444"]])}
+function legend(rows){return rows.map(r=>`<div class="legend-row"><i class="legend-dot" style="background:${r[2]}"></i><span>${r[0]}</span><b>${r[1]}</b></div>`).join("")}
+function renderStoreBars(){let counts={"A56 Este":0,"A72":0};promotions.forEach(p=>counts[p.store]=(counts[p.store]||0)+1);let max=Math.max(...Object.values(counts),1);$("storeBars").innerHTML=Object.entries(counts).map(([k,v])=>`<div class="bar-row"><span>${k}</span><div class="bar-track"><div class="bar-fill" style="width:${v/max*100}%"></div></div><b>${v}</b></div>`).join("")}
+function renderAgents(){let gp=$("globalStore").value, list=agents.filter(a=>gp==="all"||a.store===gp);$("agentGrid").innerHTML=list.map(a=>{let n=promotions.filter(p=>p.agent===a.name).length;return `<article class="agent-card"><div class="avatar">${a.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</div><h4>${a.name}</h4><p>${a.store}</p><div class="agent-stat"><span>Promociones</span><b>${n}</b></div></article>`}).join("")}
+function renderAnalytics(){let c56=promotions.filter(p=>p.store==="A56 Este").length,c72=promotions.filter(p=>p.store==="A72").length,total=c56+c72||1,p=c56/total*100;$("storeDonut").style.background=`conic-gradient(#f97316 0 ${p}%,#8b5cf6 ${p}% 100%)`;$("storeDonutTotal").textContent=c56+c72;$("storeLegend").innerHTML=legend([["A56 Este",c56,"#f97316"],["A72",c72,"#8b5cf6"]]);let vals=agents.map(a=>[a.name,promotions.filter(p=>p.agent===a.name).length]),max=Math.max(...vals.map(x=>x[1]),1);$("agentBars").innerHTML=vals.map(([n,v])=>`<div class="bar-row"><span>${n}</span><div class="bar-track"><div class="bar-fill" style="width:${v/max*100}%"></div></div><b>${v}</b></div>`).join("");renderHeatmap()}
+function renderHeatmap(){let days=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"], stores=["A56 Este","A72"], html="<div></div>"+days.map(d=>`<div class='heat-head'>${d}</div>`).join("");stores.forEach((s,si)=>{html+=`<div class='heat-label'>${s}</div>`;days.forEach((d,di)=>{let v=(promotions.filter(p=>p.store===s).length+di+si*2)%5;html+=`<div class='heat-cell h${v}' title='${s} - ${d}: nivel ${v}'></div>`})});$("heatmap").innerHTML=html}
+function openDialog(p=null){$("promoForm").reset();$("promoId").value=p?.id||"";$("dialogTitle").textContent=p?"Editar promoción":"Nueva promoción";["Name","Code","Product","Price","OldPrice","Store","Agent","Start","End","Image","Description"].forEach(k=>{$("promo"+k).value=p?.[k[0].toLowerCase()+k.slice(1)]||""});if(!p){$("promoStart").value=iso(new Date());$("promoEnd").value=addDays(7)}$("promoDialog").showModal()}
+window.editPromotion=id=>openDialog(promotions.find(p=>p.id===id));window.deletePromotion=id=>{if(confirm("¿Eliminar esta promoción?")){promotions=promotions.filter(p=>p.id!==id);save();render();toast("Promoción eliminada")}}
+$("promoAgent").innerHTML=agents.map(a=>`<option>${a.name}</option>`).join("");
+$("loginForm").onsubmit=e=>{e.preventDefault();let u=getUser();if($("loginUser").value===u.username&&$("loginPass").value===u.password){sessionStorage.setItem(KEYS.session,"1");showApp()}else toast("Usuario o contraseña incorrectos")};
+function showApp(){$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");$("dateLabel").textContent=new Intl.DateTimeFormat("es-NI",{dateStyle:"full"}).format(new Date());render()}
+$("logoutBtn").onclick=()=>{sessionStorage.removeItem(KEYS.session);location.reload()};document.querySelectorAll(".nav-btn").forEach(b=>b.onclick=()=>{document.querySelectorAll(".nav-btn").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".view").forEach(v=>v.classList.add("hidden"));$(b.dataset.view+"View").classList.remove("hidden");$("pageTitle").textContent={dashboard:"Resumen",promotions:"Promociones",agents:"Agentes",analytics:"Analítica",settings:"Configuración"}[b.dataset.view];$("sidebar").classList.remove("open")});
+$("menuBtn").onclick=()=>$("sidebar").classList.toggle("open");$("quickAddBtn").onclick=$("addPromoBtn").onclick=()=>openDialog();$("closeDialogBtn").onclick=$("cancelDialogBtn").onclick=()=>$("promoDialog").close();["searchInput","statusFilter","promoStoreFilter","globalStore"].forEach(id=>$(id).addEventListener(id==="searchInput"?"input":"change",render));
+$("promoForm").onsubmit=e=>{e.preventDefault();let d={id:$("promoId").value||crypto.randomUUID(),name:$("promoName").value.trim(),code:$("promoCode").value.trim(),product:$("promoProduct").value.trim(),price:+$("promoPrice").value,oldPrice:+$("promoOldPrice").value||0,store:$("promoStore").value,agent:$("promoAgent").value,start:$("promoStart").value,end:$("promoEnd").value,image:$("promoImage").value.trim(),description:$("promoDescription").value.trim()};if(d.end<d.start)return toast("La fecha final no puede ser anterior");let i=promotions.findIndex(p=>p.id===d.id);if(i>=0)promotions[i]=d;else promotions.unshift(d);save();$("promoDialog").close();render();toast(i>=0?"Promoción actualizada":"Promoción creada")};
+$("credentialsForm").onsubmit=e=>{e.preventDefault();localStorage.setItem(KEYS.user,JSON.stringify({username:$("newUsername").value.trim(),password:$("newPassword").value}));toast("Credenciales actualizadas");e.target.reset()};
+$("exportBtn").onclick=()=>{let blob=new Blob([JSON.stringify({promotions,user:getUser()},null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="respaldo-ampm.json";a.click()};
+$("importFile").onchange=async e=>{try{let d=JSON.parse(await e.target.files[0].text());promotions=d.promotions;save();if(d.user)localStorage.setItem(KEYS.user,JSON.stringify(d.user));render();toast("Respaldo importado")}catch{toast("Archivo inválido")}};
+$("resetBtn").onclick=()=>{if(confirm("¿Restablecer todos los datos?")){localStorage.removeItem(KEYS.promos);localStorage.removeItem(KEYS.user);location.reload()}};
+if("serviceWorker"in navigator)addEventListener("load",()=>navigator.serviceWorker.register("service-worker.js").catch(()=>{}));if(sessionStorage.getItem(KEYS.session)==="1")showApp();
